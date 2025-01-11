@@ -5,6 +5,55 @@ import os
 
 st.set_page_config(layout="wide")
 
+import pandas as pd
+from datetime import datetime
+
+
+def get_last_scraping_date(data_path):
+    """
+    Retrieves the last scraping date from the 'retrieval_date' column in a CSV file.
+
+    Parameters:
+        data_path (str): Path to the CSV file containing the scraping data.
+
+    Returns:
+        datetime or None: The latest retrieval_date if found, otherwise None.
+    """
+    try:
+        # Load the data
+        df = pd.read_csv(data_path, parse_dates=['retrieval_date'])
+
+        # Check if the retrieval_date column exists
+        if 'retrieval_date' not in df.columns:
+            print("The 'retrieval_date' column is not present in the dataset.")
+            return None
+
+        # Find the most recent retrieval date
+        last_date = df['retrieval_date'].max()
+
+        if pd.isnull(last_date):
+            print("No valid dates found in the 'retrieval_date' column.")
+            return None
+
+        return last_date
+    except FileNotFoundError:
+        print(f"File not found: {data_path}")
+        return None
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
+# Example usage:
+data_path = 'googlemaps-scraper/data/newest_gm_reviews.csv'
+last_date = get_last_scraping_date(data_path)
+
+if last_date:
+    st.write(f"The last scraping date is: {last_date}")
+else:
+    st.write("Could not retrieve the last scraping date.")
+
+
 # Function to trigger the scraper
 def run_scraper():
     try:
