@@ -5,11 +5,23 @@ import plotly.express as px
 import os
 from app_utils import get_last_scraping_date, load_data, run_scraper
 
+import psutil
+
+
+
 ### APP HEADERS ###
 st.set_page_config(layout="wide")
 
 logo_path_1 = "images/naturals_logo.png"
 logo_path_2 = "images/naturals_signature.png"
+
+def get_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_usage = process.memory_info().rss / (1024 ** 2)  # Convert to MB
+    return memory_usage
+
+st.sidebar.write(f"Memory usage: {get_memory_usage():.2f} MB")
+
 
 # Create three columns with ratios (4:1:1 works well for title + two logos)
 col1, col2, col3 = st.columns([4, 1, 1])
