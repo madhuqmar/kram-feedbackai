@@ -26,9 +26,6 @@ with col1:
         """
     )
 
-data_path = 'googlemaps-scraper/data/newest_gm_reviews_2025-01-13.csv'
-last_date = get_last_scraping_date(data_path)
-
 # Add the first logo to the second column
 with col2:
     st.image(logo_path_1)
@@ -45,20 +42,20 @@ def main():
     ratings_df = load_data(file_path_1)
     ratings_df.rename(columns={"Place ID": "place_id"}, inplace=True)
 
-    file_path_2 = "googlemaps-scraper/data/newest_gm_reviews_2025-01-13.csv"
+    file_path_2 = "googlemaps-scraper/data/newest_gm_reviews_2025-01-16.csv"
     reviews_df = load_data(file_path_2)
+    last_date = get_last_scraping_date(file_path_2)
 
     file_path_3 = "data/naturals_sentiments.csv"
     sentiments_df = load_data(file_path_3)
     sentiments_df = sentiments_df[["id_review", "place_id", "username", "review_date", "sentiment"]]
 
-    df = pd.merge(ratings_df, sentiments_df, on="place_id", how="right")
-    df = pd.merge(df, reviews_df, on=["place_id", "id_review", "review_date",  "username"], how="right")
-
-    st.write(df)
+    df = pd.merge(ratings_df, reviews_df, on="place_id", how="left")
+    df = pd.merge(df, sentiments_df, on=["place_id", "id_review", "review_date",  "username"], how="left")
 
     df = df[df["caption"].notna()]
-    df['full_location'] = df['City'] + " " + df['Area'] + " " + df['Name']
+    df['full_location'] = df['Area'] + " " + df['Name']
+    df = df.drop(columns=["Unnamed: 0"])
 
     if not ratings_df.empty and not reviews_df.empty and not sentiments_df.empty:
         st.success("Data loaded successfully!")
@@ -125,6 +122,7 @@ def main():
 
     # Create dropdown options with labels
     timeline_options = {
+        "All": None,
         f"Today, {today.strftime('%d %b')}": (today, today),
         f"Yesterday, {yesterday.strftime('%d %b')}": (yesterday, yesterday),
         f"This week, {this_week_start.strftime('%d %b')} to {today.strftime('%d %b')}": (this_week_start, today),
@@ -173,7 +171,10 @@ def main():
         )
 
     # Filtering Logic
-    if selected_timeline_label == "Custom Range":
+    # Apply timeline filter
+    if selected_timeline_label == "All":
+        filtered_df = df.copy()  # No date filter, show all data
+    elif selected_timeline_label == "Custom Range":
         start_date = pd.to_datetime(st.sidebar.date_input("Start Date", value=today))
         end_date = pd.to_datetime(st.sidebar.date_input("End Date", value=today))
         if start_date > end_date:
@@ -216,30 +217,58 @@ def main():
     m3.metric(label="Total Number of Reviews", value=total_reviews)
 
     if not filtered_df.empty:
-        # Group by location and calculate average rating
-        location_ratings = filtered_df.groupby('full_location')['rating'].mean().reset_index()
-        location_ratings.columns = ['Location', 'Average Rating']
-        st.write(filtered_df)
+        # Ensure 'review_date' is in datetime format
+        filtered_df['review_date'] = pd.to_datetime(filtered_df['review_date'], errors='coerce')
 
-        if not location_ratings.empty:
-            best_location = location_ratings.loc[location_ratings['Average Rating'].idxmax()]
-            least_location = location_ratings.loc[location_ratings['Average Rating'].idxmin()]
+        # Group data by location and find start and end dates dynamically for each location
+        dynamic_dates = filtered_df.groupby('full_location')['review_date'].agg(['min', 'max']).reset_index()
+        dynamic_dates.columns = ['Location', 'Start_Date', 'End_Date']
 
-            # Display metrics
-            with l1:
-                st.metric(
-                    label="Best Rated Location",
-                    value=best_location['Location'],
-                    delta=f"Avg Rating: {best_location['Average Rating']:.2f}"
-                )
-            with l2:
-                st.metric(
-                    label="Least Rated Location",
-                    value=least_location['Location'],
-                    delta=f"Avg Rating: {least_location['Average Rating']:.2f}"
-                )
-        else:
-            st.warning("No locations found after grouping.")
+        # Calculate average ratings for start and end dates dynamically
+        def calculate_avg_rating(data, date_column, date_value):
+            return data[data[date_column] == date_value]['rating'].mean()
+
+        # Initialize lists to store the calculated values
+        avg_rating_start = []
+        avg_rating_end = []
+
+        for _, row in dynamic_dates.iterrows():
+            location_data = filtered_df[filtered_df['full_location'] == row['Location']]
+            avg_rating_start.append(calculate_avg_rating(location_data, 'review_date', row['Start_Date']))
+            avg_rating_end.append(calculate_avg_rating(location_data, 'review_date', row['End_Date']))
+
+        # Add the calculated ratings to the dynamic_dates DataFrame
+        dynamic_dates['Average_Rating_Start'] = avg_rating_start
+        dynamic_dates['Average_Rating_End'] = avg_rating_end
+
+        # Calculate delta
+        dynamic_dates['Delta'] = dynamic_dates['Average_Rating_End'] - dynamic_dates['Average_Rating_Start']
+
+        # Identify best-rated and least-rated locations based on end-date ratings
+        best_location = dynamic_dates.loc[dynamic_dates['Average_Rating_End'].idxmax()]
+        least_location = dynamic_dates.loc[dynamic_dates['Average_Rating_End'].idxmin()]
+
+        # Ensure deltas are positive for best-rated and negative for least-rated
+        best_location_delta = abs(best_location['Delta']) if not pd.isna(best_location['Delta']) else None
+        least_location_delta = -abs(least_location['Delta']) if not pd.isna(least_location['Delta']) else None
+
+        # Display metrics
+        with l1:
+            st.metric(
+                label="Best Rated Location",
+                value=f"{best_location['Location']}",
+                delta=f"{best_location_delta:.2f} (Overall Rating: {best_location['Average_Rating_End']:.2f})"
+                if best_location_delta is not None else None
+            )
+
+        with l2:
+            st.metric(
+                label="Least Rated Location",
+                value=f"{least_location['Location']}",
+                delta=f"{least_location_delta:.2f} (Overall Rating: {least_location['Average_Rating_End']:.2f})"
+                if least_location_delta is not None else None,
+            )
+
     else:
         st.warning("No data available for the selected timeline.")
 
