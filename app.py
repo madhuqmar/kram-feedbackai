@@ -54,7 +54,7 @@ def main():
     ratings_df = load_data(file_path_1)
     ratings_df.rename(columns={"Place ID": "place_id"}, inplace=True)
 
-    file_path_2 = "googlemaps-scraper/data/newest_gm_reviews_2025-01-16.csv"
+    file_path_2 = "data/data/newest_gm_reviews_2025-01-16.csv"
     reviews_df = load_data(file_path_2)
     last_date = get_last_scraping_date(file_path_2)
 

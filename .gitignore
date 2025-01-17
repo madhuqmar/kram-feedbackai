@@ -29,6 +29,6 @@ proj_env/lib/python3.9/*
 
 # Ignore experimentation files
 experimentation/
-Step_1_locations_ratings_extraction.ipynb
-Step_2_google_reviews_scraping.ipynb
-Step_3_genai_sentiment_analysis.ipynb
+experimentation/Step_1_locations_ratings_extraction.ipynb
+experimentation/Step_2_google_reviews_scraping.ipynb
+experimentation/Step_3_genai_sentiment_analysis.ipynb
