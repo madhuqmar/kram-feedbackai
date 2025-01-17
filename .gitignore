@@ -8,11 +8,14 @@ __pycache__/
 
 # Scraper
 googlemaps-scraper/
+gm-scraper.log
+logs/
 
 # Data
 data/review_data/
 data/map_urls/
 data/location_data
+data/*
 
 # Ignore virtual environment and related files
 proj_env/
@@ -23,3 +26,9 @@ proj_env/
 # Ignore sensitive files
 *.env
 proj_env/lib/python3.9/*
+
+# Ignore experimentation files
+experimentation/
+Step_1_locations_ratings_extraction.ipynb
+Step_2_google_reviews_scraping.ipynb
+Step_3_genai_sentiment_analysis.ipynb
