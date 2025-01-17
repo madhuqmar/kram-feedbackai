@@ -1,4 +1,10 @@
+beautifulsoup4==4.12.3
+numpy==2.2.1
 pandas==2.2.3
 plotly==5.24.1
+pymongo==4.6.1
+python_dateutil==2.9.0.post0
 selenium==4.27.1
 streamlit==1.40.2
+termcolor==2.5.0
+webdriver_manager==3.5.2
