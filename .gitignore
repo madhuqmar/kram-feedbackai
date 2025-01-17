@@ -7,12 +7,13 @@ __pycache__/
 .ipynb_checkpoints/*
 
 # Scraper
-googlemaps-scraper/
+googlemaps-scraper/*
 
 # Data
 data/review_data/
 data/map_urls/
 data/location_data
+data/*
 
 # Ignore virtual environment and related files
 proj_env/
@@ -23,3 +24,9 @@ proj_env/
 # Ignore sensitive files
 *.env
 proj_env/lib/python3.9/*
+
+# Experimentation Notebooks
+experimentation/
+
+# Logs
+logs/

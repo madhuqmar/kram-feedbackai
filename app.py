@@ -28,7 +28,7 @@ def main():
     ratings_df = load_data(file_path_1)
     ratings_df["full_location"] = ratings_df["City Area"] + ratings_df["Name"]
 
-    file_path_2 = "data/naturals_reviews_sentiments.csv"
+    file_path_2 = "data/naturals_reviews.csv"
     reviews_df = load_data(file_path_2)
 
     file_path_3 = "data/naturals_sentiments.csv"
